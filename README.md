@@ -17,3 +17,15 @@ Run the following command:
 npm install
 npm start
 ```
+
+## Contributing Rules
+
+### Branch Naming
+
+- `author-name/feature-name`
+- `author-name/fix-name`
+
+### Commit Message
+
+- `:(gitmoji): (message)`  
+    Example: `:sparkles: add new feature`
