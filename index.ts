@@ -2,8 +2,10 @@
     PioneBOT Main
 */
 
-import { Client, REST, Routes, GatewayIntentBits, SlashCommandBuilder, ActivityType, EmbedBuilder, Colors } from "discord.js";
+import { Client, REST, Routes, GatewayIntentBits, SlashCommandBuilder, ActivityType, EmbedBuilder, Colors, ChannelType } from "discord.js";
 import dotenv from "dotenv";
+import * as db from "./includes/database";
+import createJoinImage from "./includes/create-join-image";
 
 dotenv.config();
 const token = process.env.DISCORD_TOKEN as string;
@@ -56,6 +58,39 @@ client.on("interactionCreate", async interaction => {
             ]
         });
     }
+});
+
+// Join message
+client.on("guildMemberAdd", async member => {
+    const serverId = member.guild.id;
+    const [rows] = await db.getServerJoinSettings(serverId);
+    if (rows.length === 0) return;
+
+    const channelId = rows[0].channel_id;
+    const imageTemplate = rows[0].image_template;
+    const joinMessage = rows[0].join_message.replace("{user}", member.displayName);
+    const bottomMessage = rows[0].bottom_message.replace("{user}", member.displayName);
+
+    const channel = member.guild.channels.cache.get(channelId);
+    if (!channel || channel.type != ChannelType.GuildText) return;
+
+    await channel.send({
+        "content": `${joinMessage}\n${bottomMessage}`,
+        "files": [
+            {
+                "attachment": await createJoinImage(
+                    member.avatarURL({
+                        "extension": "png",
+                        "size": 256
+                    }) as string,
+                    joinMessage,
+                    bottomMessage,
+                    imageTemplate
+                ),
+                "name": `join-${member.id}.png`
+            }
+        ]
+    });
 });
 
 client.login(token);
