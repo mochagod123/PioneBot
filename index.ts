@@ -2,7 +2,7 @@
     PioneBOT Main
 */
 
-import { Client, REST, Routes, GatewayIntentBits, SlashCommandBuilder } from "discord.js";
+import { Client, REST, Routes, GatewayIntentBits, SlashCommandBuilder, ActivityType } from "discord.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -19,6 +19,16 @@ client.on("ready", () => {
     console.log(`Logged in as ${client.user?.tag}!`);
 
     rest.put(Routes.applicationCommands(client.application?.id as string), { body: commands });
+
+    client.user?.setPresence({
+        activities: [
+            {
+                name: "PioneBOT",
+                type: ActivityType.Listening
+            }
+        ],
+        status: "online"
+    });
 });
 
 client.on("interactionCreate", async interaction => {
