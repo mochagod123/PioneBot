@@ -4,12 +4,8 @@ This bot is for the Budō-Tō.
 
 ## How to run
 
-Create a `.env` file in the root directory.  
-Add the following line to the `.env` file:
-
-```env
-DISCORD_TOKEN=(your discord token)
-```
+Copy the `.env.template` file and rename it to `.env`.  
+Fill in the necessary information.
 
 Run the following command:
 
