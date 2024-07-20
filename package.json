@@ -1,0 +1,11 @@
+{
+  "name": "pionebot",
+  "version": "1.0.0",
+  "description": "the Budou-tou's discord bot",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "test": "ts-node index.ts"
+  },
+  "license": "MIT"
+}
