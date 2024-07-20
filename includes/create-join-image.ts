@@ -3,6 +3,9 @@
 */
 
 import { createCanvas, loadImage, registerFont } from "canvas";
+import fs from "node:fs";
+
+const templateList = fs.readdirSync("./assets/join").filter(file => file.endsWith(".png")).map(file => parseInt(file.split(".")[0]));
 
 async function createJoinImage(userIcon: string, topText: string, bottomText: string, imageTemplate: number): Promise<Buffer> {
     const canvas = createCanvas(1024, 512);
@@ -45,4 +48,4 @@ async function createJoinImage(userIcon: string, topText: string, bottomText: st
     return canvas.toBuffer("image/png");
 }
 
-export default createJoinImage;
+export { createJoinImage, templateList };

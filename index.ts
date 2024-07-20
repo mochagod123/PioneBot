@@ -5,7 +5,7 @@
 import { Client, REST, Routes, GatewayIntentBits, SlashCommandBuilder, ActivityType, EmbedBuilder, Colors, ChannelType } from "discord.js";
 import dotenv from "dotenv";
 import * as db from "./includes/database";
-import createJoinImage from "./includes/create-join-image";
+import * as joinImage from "./includes/create-join-image";
 
 dotenv.config();
 const token = process.env.DISCORD_TOKEN as string;
@@ -15,7 +15,51 @@ const commands = [
     new SlashCommandBuilder()
         .setName("ping")
         .setDescription("Replies with Pong!")
-        .setDescriptionLocalization("ja", "Pong! と返信します。")
+        .setDescriptionLocalization("ja", "Pong! と返信します。"),
+    new SlashCommandBuilder()
+        .setName("settings")
+        .setDescription("PioneBOT's settings")
+        .setDescriptionLocalization("ja", "PioneBOTの設定")
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName("join")
+                .setDescription("Join message settings")
+                .setDescriptionLocalization("ja", "入室メッセージの設定")
+                .addStringOption(option =>
+                    option
+                        .setName("channel")
+                        .setDescription("Channel to send join message")
+                        .setDescriptionLocalization("ja", "入室メッセージを送信するチャンネル")
+                        .setRequired(true)
+                )
+                .addIntegerOption(option =>
+                    option
+                        .setName("template")
+                        .setDescription("Image template number")
+                        .setDescriptionLocalization("ja", "画像テンプレート番号")
+                        .addChoices(
+                            joinImage.templateList.map(template => ({
+                                name: template.toString(),
+                                value: template
+                            }))
+                        )
+                        .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option
+                        .setName("join_message")
+                        .setDescription("Join message")
+                        .setDescriptionLocalization("ja", "入室メッセージ")
+                        .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option
+                        .setName("bottom_message")
+                        .setDescription("Bottom message")
+                        .setDescriptionLocalization("ja", "下部メッセージ")
+                        .setRequired(true)
+                )
+        )
 ];
 
 client.on("ready", () => {
@@ -78,7 +122,7 @@ client.on("guildMemberAdd", async member => {
         "content": `${joinMessage}\n${bottomMessage}`,
         "files": [
             {
-                "attachment": await createJoinImage(
+                "attachment": await joinImage.createJoinImage(
                     member.avatarURL({
                         "extension": "png",
                         "size": 256
