@@ -13,6 +13,7 @@ const commands = [
     new SlashCommandBuilder()
         .setName("ping")
         .setDescription("Replies with Pong!")
+        .setDescriptionLocalization("ja", "Pong! と返信します。")
 ];
 
 client.on("ready", () => {
@@ -42,12 +43,12 @@ client.on("interactionCreate", async interaction => {
                     .setTitle("Pong!")
                     .addFields([
                         {
-                            name: "🏓 Latency",
-                            value: `${Date.now() - interaction.createdTimestamp}ms`
+                            name: "🏓 メッセージレイテンシ",
+                            value: `${Date.now() - interaction.createdTimestamp}ミリ秒`
                         },
                         {
-                            name: "💓 API Latency",
-                            value: `${Math.round(client.ws.ping)}ms`
+                            name: "💓 APIレイテンシ",
+                            value: `${Math.round(client.ws.ping)}ミリ秒`
                         }
                     ])
                     .setTimestamp()
