@@ -10,8 +10,7 @@ export default [
   ...tseslint.configs.recommended,
   {
     "plugins": {
-      "@stylistic/ts": stylisticTs,
-      "@renorari": pluginRenorari
+      "@stylistic/ts": stylisticTs
     },
     "rules": {
       "@/linebreak-style": ["error", "unix"],
