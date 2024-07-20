@@ -2,7 +2,7 @@
     PioneBOT Main
 */
 
-import { Client, REST, Routes, GatewayIntentBits, SlashCommandBuilder, ActivityType } from "discord.js";
+import { Client, REST, Routes, GatewayIntentBits, SlashCommandBuilder, ActivityType, EmbedBuilder, Colors } from "discord.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -35,7 +35,25 @@ client.on("interactionCreate", async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     if (interaction.commandName === "ping") {
-        await interaction.reply("Pong!");
+        await interaction.reply({
+            "content": "Pong!",
+            "embeds": [
+                new EmbedBuilder()
+                    .setTitle("Pong!")
+                    .addFields([
+                        {
+                            name: "🏓 Latency",
+                            value: `${Date.now() - interaction.createdTimestamp}ms`
+                        },
+                        {
+                            name: "💓 API Latency",
+                            value: `${Math.round(client.ws.ping)}ms`
+                        }
+                    ])
+                    .setTimestamp()
+                    .setColor(Colors.Purple)
+            ]
+        });
     }
 });
 
