@@ -27,7 +27,7 @@ async function createJoinImage(userIcon: string, topText: string, bottomText: st
     ctx.restore();
 
     // フォント設定
-    registerFont("./assets/fonts/Koruri-ExtraBold.ttf", { family: "Koruri" });
+    registerFont("./assets/fonts/Koruri-Extrabold.ttf", { family: "Koruri" });
     ctx.font = "64px Koruri";
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "left";
