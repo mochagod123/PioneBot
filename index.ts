@@ -89,6 +89,27 @@ const commands = [
                         .setRequired(true)
                 )
         )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName("leave")
+                .setDescription("Leave message settings")
+                .setDescriptionLocalization("ja", "退室メッセージの設定")
+                .addChannelOption(option =>
+                    option
+                        .setName("channel")
+                        .setDescription("Channel to send leave message")
+                        .setDescriptionLocalization("ja", "退室メッセージを送信するチャンネル")
+                        .setRequired(true)
+                        .addChannelTypes(ChannelType.GuildText)
+                )
+                .addStringOption(option =>
+                    option
+                        .setName("leave-message")
+                        .setDescription("Leave message")
+                        .setDescriptionLocalization("ja", "退室メッセージ")
+                        .setRequired(true)
+                )
+        )
 ];
 
 client.on("ready", () => {
@@ -182,6 +203,31 @@ client.on("interactionCreate", async interaction => {
                     }
                 ]
             });
+        } else if (interaction.options.getSubcommand() === "leave") {
+            const channelId = interaction.options.getChannel("channel")?.id as string;
+            const leaveMessage = interaction.options.getString("leave-message")?.replace(/\\n/g, "\n") as string;
+
+            await db.setServerLeaveSettings(interaction.guildId as string, channelId, leaveMessage);
+
+            await interaction.reply({
+                "content": "設定を保存しました!\n以下が設定内容です。",
+                "embeds": [
+                    new EmbedBuilder()
+                        .setTitle("退室メッセージ設定")
+                        .addFields([
+                            {
+                                name: "Channel",
+                                value: `<#${channelId}>`
+                            },
+                            {
+                                name: "Leave Message",
+                                value: leaveMessage.replace(/{user}/g, "(ユーザー名)")
+                            }
+                        ])
+                        .setColor(Colors.Green)
+                ]
+            });
+        
         }
     }
 });
@@ -194,8 +240,8 @@ client.on("guildMemberAdd", async member => {
 
     const channelId = settings.channelId;
     const imageTemplate = settings.imageTemplate;
-    const joinMessage = settings.joinMessage.replace(/\{user\}/g, member.displayName);
-    const bottomMessage = settings.bottomMessage.replace(/\{user\}/g, member.displayName);
+    const joinMessage = settings.joinMessage.replace(/{user}/g, member.displayName).replace(/{user_id}/g, member.id);
+    const bottomMessage = settings.bottomMessage.replace(/{user}/g, member.displayName).replace(/{user_id}/g, member.id);
 
     const channel = await member.guild.channels.fetch(channelId);
     if (!channel || channel.type != ChannelType.GuildText) return;
@@ -219,6 +265,21 @@ client.on("guildMemberAdd", async member => {
             }
         ]
     });
+});
+
+// Leave message
+client.on("guildMemberRemove", async member => {
+    const serverId = member.guild.id;
+    const settings = await db.getServerLeaveSettings(serverId);
+    if (!settings) return;
+
+    const channelId = settings.channelId;
+    const leaveMessage = settings.leaveMessage.replace(/{user}/g, member.displayName).replace(/{user_id}/g, member.id);
+
+    const channel = await member.guild.channels.fetch(channelId);
+    if (!channel || channel.type != ChannelType.GuildText) return;
+
+    await channel.send(leaveMessage);
 });
 
 client.login(token);
