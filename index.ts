@@ -35,6 +35,10 @@ const client = new Client({
 const rest = new REST({ version: "10" }).setToken(token);
 const commands = [
     new SlashCommandBuilder()
+        .setName("help")
+        .setDescription("Shows help message")
+        .setDescriptionLocalization("ja", "ヘルプメッセージを表示します。"),
+    new SlashCommandBuilder()
         .setName("ping")
         .setDescription("Replies with Pong!")
         .setDescriptionLocalization("ja", "Pong! と返信します。"),
