@@ -117,15 +117,21 @@ client.on("ready", () => {
 
     rest.put(Routes.applicationCommands(client.application?.id as string), { body: commands });
 
-    client.user?.setPresence({
-        activities: [
-            {
-                name: "PioneBOT",
-                type: ActivityType.Listening
-            }
-        ],
-        status: "online"
-    });
+    const updateStatus = () => {
+        const servers = client.guilds.cache.size;
+        client.user?.setPresence({
+            activities: [
+                {
+                    name: `${servers}servers | Made with ❤️ by Budō-Tō`,
+                    type: ActivityType.Listening
+                }
+            ],
+            status: "online"
+        });
+    };
+
+    updateStatus();
+    setInterval(updateStatus, 60000); // 1 min.
 });
 
 client.on("interactionCreate", async interaction => {
