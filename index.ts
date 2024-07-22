@@ -2,10 +2,11 @@
     PioneBOT Main
 */
 
-import { Client, REST, Routes, GatewayIntentBits, SlashCommandBuilder, ActivityType, EmbedBuilder, Colors, ChannelType, PermissionFlagsBits } from "discord.js";
+import { Client, REST, Routes, GatewayIntentBits, SlashCommandBuilder, ActivityType, EmbedBuilder, Colors, ChannelType, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import dotenv from "dotenv";
 import * as db from "./includes/database";
 import * as joinImage from "./includes/create-join-image";
+import {helpEmbeds, commandHelpEmbeds} from "./includes/help-embeds";
 
 dotenv.config();
 const token = process.env.DISCORD_TOKEN as string;
@@ -37,11 +38,24 @@ const commands = [
     new SlashCommandBuilder()
         .setName("help")
         .setDescription("Shows help message")
-        .setDescriptionLocalization("ja", "ヘルプメッセージを表示します。"),
+        .setDescriptionLocalization("ja", "ヘルプメッセージを表示します。")
+        .setDefaultMemberPermissions(
+            PermissionFlagsBits.SendMessages
+        )
+        .addStringOption(option =>
+            option
+                .setName("command")
+                .setDescription("Command name")
+                .setDescriptionLocalization("ja", "コマンド名")
+                .setRequired(false)
+        ),
     new SlashCommandBuilder()
         .setName("ping")
         .setDescription("Replies with Pong!")
-        .setDescriptionLocalization("ja", "Pong! と返信します。"),
+        .setDescriptionLocalization("ja", "Pong! と返信します。")
+        .setDefaultMemberPermissions(
+            PermissionFlagsBits.SendMessages
+        ),
     new SlashCommandBuilder()
         .setName("server-settings")
         .setDescription("PioneBOT's settings")
@@ -126,7 +140,7 @@ client.on("ready", () => {
         client.user?.setPresence({
             activities: [
                 {
-                    name: `${servers}servers | Made with ❤️ by Budō-Tō`,
+                    name: `/help | ${servers}servers | Made with ❤️ by Budō-Tō`,
                     type: ActivityType.Listening
                 }
             ],
@@ -138,6 +152,7 @@ client.on("ready", () => {
     setInterval(updateStatus, 60000); // 1 min.
 });
 
+// Slash commands
 client.on("interactionCreate", async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
@@ -162,6 +177,54 @@ client.on("interactionCreate", async interaction => {
                         .setColor(Colors.Purple)
                 ]
             });
+            break;
+        }
+
+        case "help": {
+            const commandName = interaction.options.getString("command");
+            if (!commandName) {
+                const page = 1;
+                const help = await helpEmbeds[page - 1](client);
+                await interaction.reply({
+                    "embeds": [help],
+                    "components": [
+                        new ActionRowBuilder<ButtonBuilder>()
+                            .addComponents(
+                                new ButtonBuilder()
+                                    .setCustomId("help-" + (page - 1))
+                                    .setLabel("前へ")
+                                    .setStyle(ButtonStyle.Primary)
+                                    .setDisabled((page - 1) < 1),
+                                new ButtonBuilder()
+                                    .setCustomId("help-" + page)
+                                    .setLabel(`${page}/${helpEmbeds.length}`)
+                                    .setStyle(ButtonStyle.Secondary)
+                                    .setDisabled(true),
+                                new ButtonBuilder()
+                                    .setCustomId("help-" + (page + 1))
+                                    .setLabel("次へ")
+                                    .setStyle(ButtonStyle.Primary)
+                                    .setDisabled((page + 1) > helpEmbeds.length)
+                            )
+                    ]
+                });
+            } else {
+                if (Object.prototype.hasOwnProperty.call(commandHelpEmbeds, commandName)) {
+                    await interaction.reply({
+                        "embeds": [await commandHelpEmbeds[commandName as keyof typeof commandHelpEmbeds](client)]
+                    });
+                } else {
+                    await interaction.reply({
+                        "content": "コマンド情報が見つかりませんでした。",
+                        "embeds": [
+                            new EmbedBuilder()
+                                .setTitle("Error")
+                                .setDescription("コマンド情報が見つかりませんでした。")
+                                .setColor(Colors.Red)
+                        ]
+                    });
+                }
+            }
             break;
         }
 
@@ -250,6 +313,40 @@ client.on("interactionCreate", async interaction => {
             }
             break;
         }
+    }
+});
+
+// Button interaction
+client.on("interactionCreate", async interaction => {
+    if (!interaction.isButton()) return;
+
+    if (interaction.customId.startsWith("help-")) {
+        const page = parseInt(interaction.customId.split("-")[1]);
+
+        const help = await helpEmbeds[page](client);
+        await interaction.update({
+            "embeds": [help],
+            "components": [
+                new ActionRowBuilder<ButtonBuilder>()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId("help-" + (page - 1))
+                            .setLabel("前へ")
+                            .setStyle(ButtonStyle.Primary)
+                            .setDisabled(page < 1),
+                        new ButtonBuilder()
+                            .setCustomId("help-" + page)
+                            .setLabel(`${page + 1}/${helpEmbeds.length}`)
+                            .setStyle(ButtonStyle.Secondary)
+                            .setDisabled(true),
+                        new ButtonBuilder()
+                            .setCustomId("help-" + (page + 1))
+                            .setLabel("次へ")
+                            .setStyle(ButtonStyle.Primary)
+                            .setDisabled(page + 1 > helpEmbeds.length)
+                    )
+            ]
+        });
     }
 });
 
