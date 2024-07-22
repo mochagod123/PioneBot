@@ -89,6 +89,27 @@ const commands = [
                         .setRequired(true)
                 )
         )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName("leave")
+                .setDescription("Leave message settings")
+                .setDescriptionLocalization("ja", "退室メッセージの設定")
+                .addChannelOption(option =>
+                    option
+                        .setName("channel")
+                        .setDescription("Channel to send leave message")
+                        .setDescriptionLocalization("ja", "退室メッセージを送信するチャンネル")
+                        .setRequired(true)
+                        .addChannelTypes(ChannelType.GuildText)
+                )
+                .addStringOption(option =>
+                    option
+                        .setName("leave-message")
+                        .setDescription("Leave message")
+                        .setDescriptionLocalization("ja", "退室メッセージ")
+                        .setRequired(true)
+                )
+        )
 ];
 
 client.on("ready", () => {
@@ -96,92 +117,134 @@ client.on("ready", () => {
 
     rest.put(Routes.applicationCommands(client.application?.id as string), { body: commands });
 
-    client.user?.setPresence({
-        activities: [
-            {
-                name: "PioneBOT",
-                type: ActivityType.Listening
-            }
-        ],
-        status: "online"
-    });
+    const updateStatus = () => {
+        const servers = client.guilds.cache.size;
+        client.user?.setPresence({
+            activities: [
+                {
+                    name: `${servers}servers | Made with ❤️ by Budō-Tō`,
+                    type: ActivityType.Listening
+                }
+            ],
+            status: "online"
+        });
+    };
+
+    updateStatus();
+    setInterval(updateStatus, 60000); // 1 min.
 });
 
 client.on("interactionCreate", async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
-    if (interaction.commandName === "ping") {
-        await interaction.reply({
-            "content": "Pong!",
-            "embeds": [
-                new EmbedBuilder()
-                    .setTitle("Pong!")
-                    .addFields([
-                        {
-                            name: "🏓 メッセージレイテンシ",
-                            value: `${Date.now() - interaction.createdTimestamp}ミリ秒`
-                        },
-                        {
-                            name: "💓 APIレイテンシ",
-                            value: `${Math.round(client.ws.ping)}ミリ秒`
-                        }
-                    ])
-                    .setTimestamp()
-                    .setColor(Colors.Purple)
-            ]
-        });
-    } else if (interaction.commandName === "server-settings") {
-        if (interaction.guild === null) return;
-
-        if (interaction.options.getSubcommand() === "join") {
-            const channelId = interaction.options.getChannel("channel")?.id as string;
-            const imageTemplate = interaction.options.getInteger("template") as number;
-            const joinMessage = interaction.options.getString("join-message")?.replace(/\\n/g, "\n") as string;
-            const bottomMessage = interaction.options.getString("bottom-message") as string;
-
-            await db.setServerJoinSettings(interaction.guildId as string, channelId, imageTemplate, joinMessage, bottomMessage);
-
+    switch (interaction.commandName) {
+        case "ping": {
             await interaction.reply({
-                "content": "設定を保存しました!\n以下が設定内容とそのプレビューです。",
+                "content": "Pong!",
                 "embeds": [
                     new EmbedBuilder()
-                        .setTitle("参加メッセージ設定")
+                        .setTitle("Pong!")
                         .addFields([
                             {
-                                name: "Channel",
-                                value: `<#${channelId}>`
+                                name: "🏓 メッセージレイテンシ",
+                                value: `${Date.now() - interaction.createdTimestamp}ミリ秒`
                             },
                             {
-                                name: "Image Template",
-                                value: imageTemplate.toString() + "番"
-                            },
-                            {
-                                name: "Join Message",
-                                value: joinMessage.replace(/{user}/g, "(ユーザー名)")
-                            },
-                            {
-                                name: "Bottom Message",
-                                value: bottomMessage
+                                name: "💓 APIレイテンシ",
+                                value: `${Math.round(client.ws.ping)}ミリ秒`
                             }
                         ])
-                        .setColor(Colors.Green)
-                        .setImage(`attachment://join-${interaction.user.id}.png`)
-                ],
-                "files": [
-                    {
-                        "attachment": await joinImage.createJoinImage(
-                            interaction.user.avatarURL({
-                                "extension": "png",
-                                "size": 256
-                            }) as string,
-                            joinMessage.replace(/{user}/g, interaction.guild.members.cache.get(interaction.user.id)?.displayName as string),
-                            bottomMessage,
-                            imageTemplate
-                        ),
-                        "name": `join-${interaction.user.id}.png`
-                    }
+                        .setTimestamp()
+                        .setColor(Colors.Purple)
                 ]
             });
+            break;
+        }
+
+        case "server-settings": {
+            if (interaction.guild === null) return;
+
+            switch (interaction.options.getSubcommand()) {
+                case "join": {
+                    const channelId = interaction.options.getChannel("channel")?.id as string;
+                    const imageTemplate = interaction.options.getInteger("template") as number;
+                    const joinMessage = interaction.options.getString("join-message")?.replace(/\\n/g, "\n") as string;
+                    const bottomMessage = interaction.options.getString("bottom-message") as string;
+
+                    await db.setServerJoinSettings(interaction.guildId as string, channelId, imageTemplate, joinMessage, bottomMessage);
+
+                    await interaction.reply({
+                        "content": "設定を保存しました!\n以下が設定内容とそのプレビューです。",
+                        "embeds": [
+                            new EmbedBuilder()
+                                .setTitle("参加メッセージ設定")
+                                .addFields([
+                                    {
+                                        name: "Channel",
+                                        value: `<#${channelId}>`
+                                    },
+                                    {
+                                        name: "Image Template",
+                                        value: imageTemplate.toString() + "番"
+                                    },
+                                    {
+                                        name: "Join Message",
+                                        value: joinMessage.replace(/{user}/g, "(ユーザー名)")
+                                    },
+                                    {
+                                        name: "Bottom Message",
+                                        value: bottomMessage
+                                    }
+                                ])
+                                .setColor(Colors.Green)
+                                .setImage(`attachment://join-${interaction.user.id}.png`)
+                        ],
+                        "files": [
+                            {
+                                "attachment": await joinImage.createJoinImage(
+                                    interaction.user.avatarURL({
+                                        "extension": "png",
+                                        "size": 256
+                                    }) as string,
+                                    joinMessage.replace(/{user}/g, interaction.guild.members.cache.get(interaction.user.id)?.displayName as string),
+                                    bottomMessage,
+                                    imageTemplate
+                                ),
+                                "name": `join-${interaction.user.id}.png`
+                            }
+                        ]
+                    });
+                    break;
+                }
+
+                case "leave": {
+                    const channelId = interaction.options.getChannel("channel")?.id as string;
+                    const leaveMessage = interaction.options.getString("leave-message")?.replace(/\\n/g, "\n") as string;
+
+                    await db.setServerLeaveSettings(interaction.guildId as string, channelId, leaveMessage);
+
+                    await interaction.reply({
+                        "content": "設定を保存しました!\n以下が設定内容です。",
+                        "embeds": [
+                            new EmbedBuilder()
+                                .setTitle("退室メッセージ設定")
+                                .addFields([
+                                    {
+                                        name: "Channel",
+                                        value: `<#${channelId}>`
+                                    },
+                                    {
+                                        name: "Leave Message",
+                                        value: leaveMessage.replace(/{user}/g, "(ユーザー名)")
+                                    }
+                                ])
+                                .setColor(Colors.Green)
+                        ]
+                    });
+                    break;
+                }
+            }
+            break;
         }
     }
 });
@@ -194,8 +257,8 @@ client.on("guildMemberAdd", async member => {
 
     const channelId = settings.channelId;
     const imageTemplate = settings.imageTemplate;
-    const joinMessage = settings.joinMessage.replace(/\{user\}/g, member.displayName);
-    const bottomMessage = settings.bottomMessage.replace(/\{user\}/g, member.displayName);
+    const joinMessage = settings.joinMessage.replace(/{user}/g, member.displayName).replace(/{user_id}/g, member.id);
+    const bottomMessage = settings.bottomMessage.replace(/{user}/g, member.displayName).replace(/{user_id}/g, member.id);
 
     const channel = await member.guild.channels.fetch(channelId);
     if (!channel || channel.type != ChannelType.GuildText) return;
@@ -219,6 +282,21 @@ client.on("guildMemberAdd", async member => {
             }
         ]
     });
+});
+
+// Leave message
+client.on("guildMemberRemove", async member => {
+    const serverId = member.guild.id;
+    const settings = await db.getServerLeaveSettings(serverId);
+    if (!settings) return;
+
+    const channelId = settings.channelId;
+    const leaveMessage = settings.leaveMessage.replace(/{user}/g, member.displayName).replace(/{user_id}/g, member.id);
+
+    const channel = await member.guild.channels.fetch(channelId);
+    if (!channel || channel.type != ChannelType.GuildText) return;
+
+    await channel.send(leaveMessage);
 });
 
 client.login(token);

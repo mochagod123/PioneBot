@@ -13,6 +13,12 @@ interface ServerJoinSettings {
     bottomMessage: string;
 }
 
+interface ServerLeaveSettings {
+    serverId: string;
+    channelId: string;
+    leaveMessage: string;
+}
+
 dotenv.config();
 const connection = mysql.createPool({
     host: process.env.DB_HOST,
@@ -23,13 +29,18 @@ const connection = mysql.createPool({
 });
 
 connection.query("CREATE TABLE IF NOT EXISTS server_join_settings (server_id VARCHAR(20) PRIMARY KEY, channel_id VARCHAR(20), image_template INT, join_message TEXT, bottom_message TEXT)") as Promise<mysql.RowDataPacket[]>;
+connection.query("CREATE TABLE IF NOT EXISTS server_leave_settings (server_id VARCHAR(20) PRIMARY KEY, channel_id VARCHAR(20), leave_message TEXT)") as Promise<mysql.RowDataPacket[]>;
 
 function getConnection() {
     return connection;
 }
 
-function setServerJoinSettings(serverId: string, channelId: string, imageTemplate: number, joinMessage: string, bottomMessage:string): Promise<mysql.RowDataPacket[]> {
+function setServerJoinSettings(serverId: string, channelId: string, imageTemplate: number, joinMessage: string, bottomMessage: string): Promise<mysql.RowDataPacket[]> {
     return connection.query("INSERT INTO server_join_settings (server_id, channel_id, image_template, join_message, bottom_message) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE channel_id = ?, image_template = ?, join_message = ?, bottom_message = ?", [serverId, channelId, imageTemplate, joinMessage, bottomMessage, channelId, imageTemplate, joinMessage, bottomMessage]) as Promise<mysql.RowDataPacket[]>;
+}
+
+function setServerLeaveSettings(serverId: string, channelId: string, leaveMessage: string): Promise<mysql.RowDataPacket[]> {
+    return connection.query("INSERT INTO server_leave_settings (server_id, channel_id, leave_message) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE channel_id = ?, leave_message = ?", [serverId, channelId, leaveMessage, channelId, leaveMessage]) as Promise<mysql.RowDataPacket[]>;
 }
 
 async function getServerJoinSettings(serverId: string): Promise<ServerJoinSettings | null> {
@@ -44,4 +55,20 @@ async function getServerJoinSettings(serverId: string): Promise<ServerJoinSettin
     };
 }
 
-export { getConnection, getServerJoinSettings, setServerJoinSettings };
+async function getServerLeaveSettings(serverId: string): Promise<ServerLeaveSettings | null> {
+    const [rows] = await connection.query("SELECT * FROM server_leave_settings WHERE server_id = ?", [serverId]) as mysql.RowDataPacket[];
+    if (rows.length === 0) return null;
+    return {
+        serverId: rows[0].server_id,
+        channelId: rows[0].channel_id,
+        leaveMessage: rows[0].leave_message
+    };
+}
+
+export {
+    getConnection,
+    getServerJoinSettings,
+    setServerJoinSettings,
+    getServerLeaveSettings,
+    setServerLeaveSettings
+};
