@@ -2,7 +2,7 @@
     PioneBOT Help Embeds
 */
 
-import { Client, Colors, EmbedBuilder, Guild } from "discord.js";
+import { Client, Colors, EmbedBuilder } from "discord.js";
 
 const helpEmbeds = [
     async (client: Client) => {
@@ -115,7 +115,7 @@ const commandHelpEmbeds = {
                     value: "join: \n  channel: 参加メッセージを送信するチャンネルを設定します。\n  template: 送信する画像のテンプレートを選択してください。テンプレートは下の画像の通りです。\n  join-message: 画像上でユーザーアイコンの横に来るメッセージです。\n  bottom-message: 画像の下部に表示されるメッセージです。\nleave: \n  channel: 退出メッセージを送信するチャンネルを設定します。\n  leave-message: 退出時のメッセージです。\n\nメッセージは{user}と{user_id}が指定できます。"
                 }
             )
-            .setImage("attachment://template.png");
+            .setImage("https://github.com/mochagod123/PioneBot/blob/main/assets/join-preview.png?raw=true");
     }
 };
 
