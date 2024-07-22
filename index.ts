@@ -321,6 +321,14 @@ client.on("interactionCreate", async interaction => {
     if (!interaction.isButton()) return;
 
     if (interaction.customId.startsWith("help-")) {
+        if (interaction.user.id !== interaction.message.interaction?.user.id) {
+            await interaction.reply({
+                "content": "他のユーザーの操作はできません。",
+                "ephemeral": true
+            });
+            return;
+        }
+
         const page = parseInt(interaction.customId.split("-")[1]);
 
         const help = await helpEmbeds[page](client);
