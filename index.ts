@@ -366,8 +366,12 @@ client.on("guildMemberAdd", async member => {
 
     const channelId = settings.channelId;
     const imageTemplate = settings.imageTemplate;
-    const joinMessage = settings.joinMessage.replace(/{user}/g, member.displayName).replace(/{user_id}/g, member.id);
-    const bottomMessage = settings.bottomMessage.replace(/{user}/g, member.displayName).replace(/{user_id}/g, member.id);
+    const joinMessage = settings.joinMessage
+        .replace(/{user}/g, member.displayName.replace(/@/g, "\\@"))
+        .replace(/{user_id}/g, member.id);
+    const bottomMessage = settings.bottomMessage
+        .replace(/{user}/g, member.displayName.replace(/@/g, "\\@"))
+        .replace(/{user_id}/g, member.id);
 
     const channel = await member.guild.channels.fetch(channelId);
     if (!channel || channel.type != ChannelType.GuildText) return;
@@ -400,7 +404,9 @@ client.on("guildMemberRemove", async member => {
     if (!settings) return;
 
     const channelId = settings.channelId;
-    const leaveMessage = settings.leaveMessage.replace(/{user}/g, member.displayName).replace(/{user_id}/g, member.id);
+    const leaveMessage = settings.leaveMessage
+        .replace(/{user}/g, member.displayName.replace(/@/g, "\\@"))
+        .replace(/{user_id}/g, member.id);
 
     const channel = await member.guild.channels.fetch(channelId);
     if (!channel || channel.type != ChannelType.GuildText) return;
